@@ -1,59 +1,41 @@
-FROM jenkins
+FROM jenkins/jenkins:lts-jdk11
 USER root
 
-RUN apt-get update
+RUN apt update
 
-#install PHP xvfb
-RUN apt-get install -y php5 php5-curl php5-gd  xvfb
+# install wget, xvfb & prerequisites
+RUN apt install -y wget unzip xvfb libxi6 libgconf-2-4
 
-# Install Selenium
+# install maven
+RUN apt install -y maven
+
+# install npm
+RUN apt install -y npm
+
+# install newman
+RUN npm install -g newman
+
+# Install Chrome
+RUN curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add
+RUN bash -c "echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' >> /etc/apt/sources.list.d/google-chrome.list"
+RUN apt -y update
+RUN apt -y install google-chrome-stable
+
+RUN wget https://chromedriver.storage.googleapis.com/99.0.4844.51/chromedriver_linux64.zip
+
+RUN unzip chromedriver_linux64.zip
+
+RUN mv chromedriver /usr/bin/chromedriver
+RUN chown jenkins:jenkins /usr/bin/chromedriver
+RUN chmod +x /usr/bin/chromedriver
+
+# Install Selenium Server
 RUN mkdir -p /opt/selenium
-RUN wget --no-verbose -O /opt/selenium/selenium-server-standalone-2.53.1.jar http://selenium-release.storage.googleapis.com/2.53/selenium-server-standalone-2.53.1.jar
-#RUN ln -fs /opt/selenium/selenium-server-standalone-2.53.1.jar /opt/selenium/selenium-server-standalone.jar
-RUN chmod +x /opt/selenium/selenium-server-standalone-2.53.1.jar
+RUN wget https://selenium-release.storage.googleapis.com/3.141/selenium-server-standalone-3.141.59.jar
+RUN mv selenium-server-standalone-3.141.59.jar /opt/selenium/selenium-server-standalone.jar
+RUN chmod +x /opt/selenium/selenium-server-standalone.jar
 
-# Install Chrome WebDriver
-RUN wget --no-verbose -O /tmp/chromedriver_linux64.zip http://chromedriver.storage.googleapis.com/2.28/chromedriver_linux64.zip
-RUN mkdir -p /opt/chromedriver-2.28
-RUN unzip /tmp/chromedriver_linux64.zip -d /opt/chromedriver-2.28
-RUN chmod +x /opt/chromedriver-2.28/chromedriver
-RUN rm /tmp/chromedriver_linux64.zip
-RUN ln -fs /opt/chromedriver-2.28/chromedriver /opt/selenium/chromedriver
-
-
-# Install Google Chrome
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
-RUN echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
-RUN apt-get -y update
-RUN apt-get -y install google-chrome-stable
-
-# Path Google Chrome
-COPY google-chrome /opt/google/chrome/
-RUN chmod +x /opt/google/chrome/google-chrome
-
-# Install composer
-ENV COMPOSER_ALLOW_SUPERUSER=1
-RUN curl -sS https://getcomposer.org/installer | php -- \
-        --filename=composer \
-        --install-dir=/usr/local/bin
-RUN composer global require --optimize-autoloader \
-        "hirak/prestissimo"
-RUN php -v
-
-
-# Install FireFox
-RUN touch /etc/apt/sources.list.d/debian-mozilla.list
-RUN echo "deb http://mozilla.debian.net/ jessie-backports firefox-release" > /etc/apt/sources.list.d/debian-mozilla.list   
-RUN wget mozilla.debian.net/pkg-mozilla-archive-keyring_1.1_all.deb
-RUN dpkg -i pkg-mozilla-archive-keyring_1.1_all.deb
-RUN apt-get update
-RUN apt-get install -y  firefox  
-
-# Install Codeception
-RUN touch /usr/local/bin/codecept
-RUN curl http://codeception.com/releases/2.2.8/codecept.phar -o /usr/local/bin/codecept
-RUN chmod +x /usr/local/bin/codecept
-#RUN php codecept.phar bootstrap 
+USER jenkins
 
 # ADD start.sh
 COPY start.sh /usr/local/bin
