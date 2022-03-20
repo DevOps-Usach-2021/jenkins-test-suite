@@ -21,3 +21,11 @@ Simplemente genera un contenedor de esta imagen a través del siguiente comando:
 ```bash
 docker run -d --name <nombre_contenedor> --rm -p <mapped_port>:8080 -v jenkins_home:/var/jenkins_home fgutierrezdocker/jenkins-test-suite:1.0
 ```
+
+# Integrantes
+- Luis Anguita
+- Jesús Donoso
+- Mario Friz
+- Fernando Gutiérrez
+- Oscar Mollo
+- Carlos Tognarell
